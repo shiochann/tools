@@ -432,13 +432,17 @@ const B64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 function b64u(bytes){ let s=''; for(let i=0;i<bytes.length;i+=3){ const a=bytes[i],b=bytes[i+1],c=bytes[i+2],n=(a<<16)|((b||0)<<8)|(c||0); s+=B64[n>>18&63]+B64[n>>12&63]+(b===undefined?'':B64[n>>6&63])+(c===undefined?'':B64[n&63]); } return s; }
 function unb64u(str){ const m={}; [...B64].forEach((c,i)=>m[c]=i); const out=[]; for(let i=0;i<str.length;i+=4){ const a=m[str[i]],b=m[str[i+1]],c=m[str[i+2]],d=m[str[i+3]]; const n=(a<<18)|(b<<12)|((c||0)<<6)|(d||0); out.push(n>>16&255); if(c!==undefined) out.push(n>>8&255); if(d!==undefined) out.push(n&255); } return new Uint8Array(out); }
 async function pipeBytes(bytes,stream){ const r=new Blob([bytes]).stream().pipeThrough(stream); return new Uint8Array(await new Response(r).arrayBuffer()); }
-function sharePayload(){
-  // 自分で載せたサムネ（data:画像）は大きすぎるのでリンクには入れない。URLのサムネはそのまま
-  const strip=x=>({...x,img:(x.img||'').startsWith('data:')?'':x.img});
-  return {v:1,tools:S.tools.map(strip),boxes:S.boxes,prompts:S.prompts.map(strip)};
+// 自分で載せたサムネ（data:画像）はリンク用に小さくする（長辺160px）。URLのサムネはそのまま
+function shrinkForLink(dataUrl){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
+  const M=160,k=Math.min(1,M/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(im.width*k)); c.height=Math.max(1,Math.round(im.height*k));
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height); res(c.toDataURL('image/jpeg',.7)); }catch(e){ res(''); } }; im.onerror=()=>res(''); im.src=dataUrl; }); }
+const hasOwnImg=()=>[...S.tools,...S.prompts].some(x=>(x.img||'').startsWith('data:'));
+async function sharePayload(withImg){
+  const conv=async x=>{ const img=x.img||''; if(!img.startsWith('data:')) return {...x}; return {...x,img:withImg?await shrinkForLink(img):''}; };
+  return {v:1,tools:await Promise.all(S.tools.map(conv)),boxes:S.boxes,prompts:await Promise.all(S.prompts.map(conv))};
 }
-async function encodeShare(){
-  const bytes=new TextEncoder().encode(JSON.stringify(sharePayload()));
+async function encodeShare(withImg=true){
+  const bytes=new TextEncoder().encode(JSON.stringify(await sharePayload(withImg)));
   if(window.CompressionStream){ try{ return 'h='+b64u(await pipeBytes(bytes,new CompressionStream('deflate-raw'))); }catch(e){} }
   return 'j='+b64u(bytes);
 }
@@ -450,25 +454,41 @@ async function decodeShare(hash){
 }
 const QR_MAX=2800; // QRに入る上限（バイト）。超えたらリンクだけ出す
 function loadQR(){ return new Promise((res,rej)=>{ if(window.QRCode) return res(); const sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+const LINE_MAX=9000; // LINEのトークは1万字まで。余裕を見た目安
 async function shareSheet(){
+  const own=hasOwnImg();
   const v=sheet(`<h2>引き継ぎリンク</h2>
-    <div class="f"><div style="color:var(--sub);font-size:13px">スマホのカメラでQRを読むか、リンクをコピーして自分にLINEで送る。開いた端末で「足す」か「置き換える」を選べば、今ここにあるツール・箱・プロンプトがそのまま出る。</div></div>
+    <div class="f"><div style="color:var(--sub);font-size:13px">スマホのカメラでQRを読むか、リンクをコピーして自分に送る。開いた端末で「足す」か「置き換える」を選べば、今ここにあるツール・箱・プロンプトがそのまま出る。</div></div>
+    ${own?`<label class="chk" style="display:flex;gap:8px;align-items:center;font-size:13px;margin:-4px 0 10px"><input type="checkbox" id="withImg" checked>自分で載せたサムネも入れる（リンクが長くなる）</label>`:''}
     <div class="qr" id="qr"><div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div></div>
-    <div class="f"><label>リンク</label><div class="linkbox" id="lk"></div></div>
+    <div class="f"><label>リンク <span id="sz" style="font-weight:500"></span></label><div class="linkbox" id="lk"></div></div>
     <div class="row"><button class="btn" id="cancel">閉じる</button><span class="spacer"></span><button class="btn primary" id="cp">リンクをコピー</button></div>
-    <div class="note" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。自分で載せたサムネ画像だけは入らないので、必要なら向こうで付け直してね。</div>
+    <div class="note" id="shareNote" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。</div>
     <div class="f" style="margin-top:18px"><label>受け取る側はこっち：届いたリンクを貼る</label><input type="text" id="rcv" placeholder="https://shiochann.github.io/tools/#h=…" inputmode="url" autocomplete="off"></div>
     <div class="row"><span class="spacer"></span><button class="btn" id="rcvBtn">貼ったリンクを読み込む</button></div>`);
   v.querySelector('#cancel').onclick=close;
   v.querySelector('#rcvBtn').onclick=()=>{ const t=v.querySelector('#rcv').value.trim(); const i=t.indexOf('#'); if(i<0){ toast('引き継ぎリンクを貼ってね'); return; } receiveHash(t.slice(i)); };
-  let url=''; const lk=v.querySelector('#lk'), qr=v.querySelector('#qr');
-  try{ url=location.origin+location.pathname+'#'+await encodeShare(); }catch(e){ lk.textContent='リンクを作れなかった、、、'; qr.innerHTML=''; return; }
-  lk.textContent=url;
-  v.querySelector('#cp').onclick=async()=>{ if(await copyText(url)) toast('コピーした！！'); else toast('コピーできなかった、、、'); };
-  const bytes=new TextEncoder().encode(url).length;
-  if(bytes>QR_MAX){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px;max-width:280px">データが多くてQRには入らなかった（${Math.round(bytes/1024)}KB）。リンクをコピーして、LINEで自分に送って開いてね。</div>`; return; }
-  try{ await loadQR(); const size=Math.min(300, window.innerWidth-80); qr.innerHTML='<div></div>'; new QRCode(qr.firstChild,{text:url,width:size,height:size,correctLevel:QRCode.CorrectLevel.L}); }
-  catch(e){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px">QRを作れなかった（オフライン？）。リンクをコピーして送ってね。</div>`; }
+  const lk=v.querySelector('#lk'), qr=v.querySelector('#qr'), sz=v.querySelector('#sz'), note=v.querySelector('#shareNote');
+  let url='', seq=0;
+  v.querySelector('#cp').onclick=async()=>{ if(!url) return; if(await copyText(url)) toast('コピーした！！'); else toast('コピーできなかった、、、'); };
+  async function build(){
+    const my=++seq, withImg=own?v.querySelector('#withImg').checked:false;
+    qr.innerHTML='<div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div>'; lk.textContent=''; sz.textContent='';
+    try{ url=location.origin+location.pathname+'#'+await encodeShare(withImg); }catch(e){ if(my===seq){ lk.textContent='リンクを作れなかった、、、'; qr.innerHTML=''; } return; }
+    if(my!==seq) return;
+    lk.textContent=url;
+    const bytes=new TextEncoder().encode(url).length, kb=(bytes/1024).toFixed(bytes<10240?1:0);
+    sz.textContent=`（${kb}KB）`;
+    const tips=[];
+    if(withImg) tips.push('サムネは小さくして入れている（長辺160px）。');
+    if(bytes>LINE_MAX) tips.push(`このリンクは長いので、LINEのトークでは送れないことがある（1万字まで）。<b>メール・AirDrop・メモアプリの共有</b>で自分に送るか${own&&withImg?'、上のチェックを外してサムネ抜きにする':''}と確実。`);
+    note.innerHTML='リンクの中にデータが入っている（サーバーには送られない）。'+tips.join('');
+    if(bytes>QR_MAX){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px;max-width:280px">${withImg?'サムネが入っているので':'データが多くて'}QRには入らない（${kb}KB）。「リンクをコピー」して自分に送ってね${own&&withImg?'。サムネ抜きならQRが出ることが多い':''}。</div>`; return; }
+    try{ await loadQR(); if(my!==seq) return; const size=Math.min(300, window.innerWidth-80); qr.innerHTML='<div></div>'; new QRCode(qr.firstChild,{text:url,width:size,height:size,correctLevel:QRCode.CorrectLevel.L}); }
+    catch(e){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px">QRを作れなかった（オフライン？）。リンクをコピーして送ってね。</div>`; }
+  }
+  if(own) v.querySelector('#withImg').onchange=build;
+  build();
 }
 async function receiveShare(){
   if(!/^#[hj]=/.test(location.hash)) return;
