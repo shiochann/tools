@@ -201,12 +201,13 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
 
 <script>
 const KEY='shio_tools_v1';
+const SEED_IMG='https://shiochann.github.io/tools/img/sns-analysis.jpg';
 const SEED_TOOLS=[{
   id:'seed-sns-analysis',
   title:'SNSアカウント分析プロンプト',
   url:'https://shiochann.github.io/shio-tools/tools/sns-account-analysis/',
   memo:'アカウントURLを貼るだけで、伸びてる投稿の1行目の型・ワード・ターゲットを分析（無料配布）',
-  img:'', created:Date.now()
+  img:SEED_IMG, created:Date.now()
 }];
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const $=s=>document.querySelector(s);
@@ -218,6 +219,8 @@ function load(){
   if(!d){ d={v:1,seeded:true,tools:SEED_TOOLS.map(t=>({...t})),boxes:[],prompts:[],banner:true}; save(d); }
   // 将来 形を変えるときは、ここで d.v を見て読み替える（データは消さない）
   if(!d.boxes) d.boxes=[]; if(!d.prompts) d.prompts=[]; if(!d.tools) d.tools=[];
+  // 既存ユーザーの seed にサムネを付ける（自分で別の画像を載せていたら触らない）
+  const seed=d.tools.find(t=>t.id==='seed-sns-analysis'); if(seed && !seed.img){ seed.img=SEED_IMG; save(d); }
   return d;
 }
 function save(d){ try{ localStorage.setItem(KEY,JSON.stringify(d||S)); }catch(e){ toast('保存できなかった、、、容量がいっぱいかも'); } }
