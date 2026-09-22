@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>tools</title>
+<meta name="description" content="自分が持っているツールとプロンプトをまとめておく、自分専用の保管庫。">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#189BBC">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="tools">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@500;600&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+:root{
+  --blue:#189BBC; --blue-deep:#127A95; --pale:#CCE2F0; --mist:#F0F6FA;
+  --bg:#FFFFFF; --card:#FFFFFF; --ink:#1A1A1A; --sub:#5B6B75; --line:#DCE6EC;
+  --danger:#C24E4E; --shadow:0 2px 10px rgba(24,155,188,.10);
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0F1A20; --card:#16242C; --ink:#EEF4F7; --sub:#9FB2BC; --line:#25363F;
+  --mist:#13222A; --pale:#1E4B5C; --shadow:0 2px 10px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0F1A20; --card:#16242C; --ink:#EEF4F7; --sub:#9FB2BC; --line:#25363F;
+  --mist:#13222A; --pale:#1E4B5C; --shadow:0 2px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;font-size:15px;line-height:1.6}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+a{color:inherit}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:"Jost",sans-serif;font-weight:600;font-size:30px;letter-spacing:.02em;margin:0;color:var(--blue)}
+.brand small{color:var(--sub);font-size:12px}
+.search{margin-top:12px;display:flex;align-items:center;gap:8px;background:var(--mist);border:1px solid var(--line);border-radius:999px;padding:9px 14px}
+.search input{flex:1;border:0;background:none;outline:none;min-width:0}
+.search svg{width:16px;height:16px;color:var(--sub);flex:none}
+
+.tabs{display:flex;gap:6px;margin:14px 0 10px;background:var(--mist);padding:4px;border-radius:999px}
+.tabs button{flex:1;padding:9px 0;border-radius:999px;font-weight:700;color:var(--sub)}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--blue);box-shadow:var(--shadow)}
+
+.empty{text-align:center;color:var(--sub);padding:48px 12px;border:1.5px dashed var(--line);border-radius:var(--r);margin-top:8px}
+.empty b{display:block;color:var(--ink);margin-bottom:6px}
+
+/* tools */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-top:8px}
+.tool{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;position:relative}
+.tool .thumb{aspect-ratio:16/9;background:var(--mist);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.tool .thumb img.full{width:100%;height:100%;object-fit:cover}
+.tool .thumb img.ico{width:36px;height:36px;border-radius:8px}
+.tool .body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:2px;flex:1}
+.tool .t{font-weight:700;font-size:14px;line-height:1.35;word-break:break-word}
+.tool .d{color:var(--sub);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tool .m{color:var(--sub);font-size:12px;margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tool .open{position:absolute;inset:0}
+.more{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:999px;background:var(--card);color:var(--ink);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.15);z-index:2}
+.more svg{width:16px;height:16px}
+
+/* prompts */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--card);font-size:13px;font-weight:500;color:var(--sub);white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.add{border-style:dashed;color:var(--blue)}
+.list{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.pr{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:12px;display:grid;grid-template-columns:auto 1fr;gap:12px;position:relative}
+.pr .thumb{width:64px;height:64px;border-radius:10px;background:var(--mist);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--blue)}
+.pr .thumb img{width:100%;height:100%;object-fit:cover}
+.pr .thumb svg{width:26px;height:26px}
+.pr .head{min-width:0;padding-right:28px}
+.pr .t{font-weight:700;font-size:15px;line-height:1.35}
+.pr .tag{display:inline-block;font-size:11px;color:var(--blue);background:var(--pale);border-radius:6px;padding:1px 7px;margin-bottom:4px}
+.pr .desc{color:var(--sub);font-size:13px;margin-top:2px}
+.pr .actions{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.copy{flex:1;background:var(--blue);color:#fff;font-weight:700;border-radius:999px;padding:10px 0;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .08s}
+.copy:active{transform:scale(.97)}
+.copy.done{background:#2E9E6B}
+.copy svg{width:16px;height:16px}
+.peek{padding:10px 14px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:13px}
+.pr pre{grid-column:1/-1;margin:0;background:var(--mist);border-radius:10px;padding:12px;font:13px/1.6 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;color:var(--ink)}
+
+/* fab */
+.fab{position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:999px;background:var(--blue);color:#fff;box-shadow:0 6px 18px rgba(24,155,188,.45);display:flex;align-items:center;justify-content:center;z-index:20}
+.fab svg{width:26px;height:26px}
+
+/* bottom sheet */
+.veil{position:fixed;inset:0;background:rgba(10,20,26,.45);z-index:30;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:14px 16px calc(24px + env(safe-area-inset-bottom));animation:up .18s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+.sheet h2{margin:4px 0 12px;font-size:17px}
+.sheet .grab{width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
+.f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.f label{font-size:12px;font-weight:700;color:var(--sub)}
+.f input[type=text],.f input[type=url],.f textarea,.f select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);outline:none}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--blue)}
+.f textarea{min-height:120px;resize:vertical}
+.f textarea.body{min-height:180px;font:13px/1.6 ui-monospace,Menlo,monospace}
+.imgpick{display:flex;align-items:center;gap:10px}
+.imgpick .pv{width:56px;height:56px;border-radius:10px;background:var(--mist);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:11px}
+.imgpick .pv img{width:100%;height:100%;object-fit:cover}
+.btn{border-radius:999px;padding:10px 16px;font-weight:700;border:1px solid var(--line);background:var(--card)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.danger{color:var(--danger);border-color:transparent}
+.btn.small{padding:7px 12px;font-size:13px}
+.row{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+.row .spacer{flex:1}
+.menu{display:flex;flex-direction:column;gap:2px}
+.menu button{text-align:left;padding:13px 6px;border-bottom:1px solid var(--line);font-weight:500}
+.menu button:last-child{border-bottom:0}
+.menu button.danger{color:var(--danger)}
+
+/* footer / settings */
+.foot{margin-top:34px;border-top:1px solid var(--line);padding-top:16px;color:var(--sub);font-size:12.5px}
+.foot .links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.note{background:var(--mist);border-radius:10px;padding:10px 12px;margin-top:8px}
+.note b{color:var(--ink)}
+.banner{background:var(--pale);border-radius:var(--r);padding:12px 14px;margin-top:12px;font-size:13px;display:flex;gap:10px;align-items:flex-start}
+.banner b{display:block;margin-bottom:2px;color:var(--blue-deep)}
+:root[data-theme="dark"] .banner b{color:#BFE6F2}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .banner b{color:#BFE6F2} }
+.banner button{color:var(--sub);flex:none;font-size:18px;line-height:1}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:0;transition:opacity .15s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><h1>tools</h1><small>自分専用のツール＆プロンプト保管庫</small></div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="さがす" autocomplete="off">
+    </div>
+    <div class="banner" id="banner" hidden>
+      <div><b>ホーム画面に追加すると、アプリみたいに開けるよ</b>iPhoneは共有ボタン →「ホーム画面に追加」。Androidはブラウザのメニュー →「ホーム画面に追加」。</div>
+      <button id="bannerClose" aria-label="閉じる">×</button>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="tools" aria-selected="true">ツール</button>
+    <button role="tab" data-tab="prompts" aria-selected="false">プロンプト</button>
+  </div>
+
+  <section id="tabTools"></section>
+  <section id="tabPrompts" hidden>
+    <div class="chips" id="chips"></div>
+    <div class="list" id="plist"></div>
+  </section>
+
+  <footer class="foot">
+    <div>データはこの端末のブラウザの中だけに保存される。サイトが更新されても消えない。端末を替えるときはバックアップで引っ越してね。</div>
+    <div class="links">
+      <button class="btn small" id="exportBtn">バックアップを書き出す</button>
+      <button class="btn small" id="importBtn">読み込む</button>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <div class="note"><b>消えるとき</b>：ブラウザのデータを消したとき。iPhoneのSafariで長い間開かなかったとき（ホーム画面に追加してあれば大丈夫）。</div>
+  </footer>
+</div>
+
+<button class="fab" id="fab" aria-label="追加"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='shio_tools_v1';
+const SEED_TOOLS=[{
+  id:'seed-sns-analysis',
+  title:'SNSアカウント分析プロンプト',
+  url:'https://shiochann.github.io/shio-tools/tools/sns-account-analysis/',
+  memo:'アカウントURLを貼るだけで、伸びてる投稿の1行目の型・ワード・ターゲットを分析（無料配布）',
+  img:'', created:Date.now()
+}];
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+const $=s=>document.querySelector(s);
+
+let S=load();
+function load(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ d=null; }
+  if(!d){ d={v:1,seeded:true,tools:SEED_TOOLS.map(t=>({...t})),boxes:[],prompts:[],banner:true}; save(d); }
+  // 将来 形を変えるときは、ここで d.v を見て読み替える（データは消さない）
+  if(!d.boxes) d.boxes=[]; if(!d.prompts) d.prompts=[]; if(!d.tools) d.tools=[];
+  return d;
+}
+function save(d){ try{ localStorage.setItem(KEY,JSON.stringify(d||S)); }catch(e){ toast('保存できなかった、、、容量がいっぱいかも'); } }
+
+let tab='tools', box='all', q='';
+const domainOf=u=>{ try{ return new URL(u).hostname.replace(/^www\./,''); }catch(e){ return ''; } };
+const favicon=u=>{ const d=domainOf(u); return d?`https://www.google.com/s2/favicons?domain=${encodeURIComponent(d)}&sz=64`:''; };
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hit=(...f)=>!q||f.join(' ').toLowerCase().includes(q.toLowerCase());
+
+/* ---------- render ---------- */
+function render(){
+  $('#tabTools').hidden = tab!=='tools';
+  $('#tabPrompts').hidden = tab!=='prompts';
+  document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  $('#banner').hidden = !S.banner;
+  tab==='tools'?renderTools():renderPrompts();
+}
+function renderTools(){
+  const list=S.tools.filter(t=>hit(t.title,t.url,t.memo));
+  const el=$('#tabTools');
+  if(!list.length){ el.innerHTML=`<div class="empty"><b>${q?'見つからなかった':'まだ何もない'}</b>${q?'':'右下の＋から、持ってるツールのURLを貼ってね'}</div>`; return; }
+  el.innerHTML=`<div class="grid">`+list.map(t=>`
+    <div class="tool">
+      <div class="thumb">${t.img?`<img class="full" src="${t.img}" alt="">`:(favicon(t.url)?`<img class="ico" src="${favicon(t.url)}" alt="" loading="lazy" onerror="this.remove()">`:'')}</div>
+      <div class="body"><div class="t">${esc(t.title)||esc(domainOf(t.url))}</div><div class="d">${esc(domainOf(t.url))}</div>${t.memo?`<div class="m">${esc(t.memo)}</div>`:''}</div>
+      <a class="open" href="${esc(t.url)}" target="_blank" rel="noopener" aria-label="${esc(t.title)}を開く"></a>
+      <button class="more" data-more-tool="${t.id}" aria-label="メニュー"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+    </div>`).join('')+`</div>`;
+}
+function renderPrompts(){
+  const chips=$('#chips');
+  chips.innerHTML=`<button class="chip" data-box="all" aria-pressed="${box==='all'}">すべて</button>`+
+    S.boxes.map(b=>`<button class="chip" data-box="${b.id}" aria-pressed="${box===b.id}">${esc(b.name)}</button>`).join('')+
+    `<button class="chip add" data-box="__new">＋ 箱を作る</button>`;
+  const list=S.prompts.filter(p=>(box==='all'||p.boxId===box)&&hit(p.title,p.desc,p.body));
+  const el=$('#plist');
+  if(!list.length){ el.innerHTML=`<div class="empty"><b>${q?'見つからなかった':'まだ何もない'}</b>${q?'':'右下の＋から、プロンプトを入れてね。箱を作って分けておくと探しやすい'}</div>`; return; }
+  const bname=id=>(S.boxes.find(b=>b.id===id)||{}).name||'';
+  el.innerHTML=list.map(p=>`
+    <div class="pr" data-id="${p.id}">
+      <div class="thumb">${p.img?`<img src="${p.img}" alt="">`:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h13"/></svg>`}</div>
+      <div class="head">${bname(p.boxId)?`<span class="tag">${esc(bname(p.boxId))}</span>`:''}<div class="t">${esc(p.title)}</div>${p.desc?`<div class="desc">${esc(p.desc)}</div>`:''}</div>
+      <button class="more" data-more-prompt="${p.id}" aria-label="メニュー"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+      <div class="actions">
+        <button class="copy" data-copy="${p.id}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>コピー</button>
+        <button class="peek" data-peek="${p.id}">中身</button>
+      </div>
+      <pre hidden data-body="${p.id}">${esc(p.body)}</pre>
+    </div>`).join('');
+}
+
+/* ---------- sheet ---------- */
+function sheet(html){
+  close();
+  const v=document.createElement('div'); v.className='veil'; v.id='veil';
+  v.innerHTML=`<div class="sheet" role="dialog"><div class="grab"></div>${html}</div>`;
+  v.addEventListener('click',e=>{ if(e.target===v) close(); });
+  document.body.appendChild(v); document.body.style.overflow='hidden';
+  return v;
+}
+function close(){ const v=$('#veil'); if(v){ v.remove(); document.body.style.overflow=''; } }
+
+function imgField(cur){
+  return `<div class="f"><label>サムネ（任意）</label><div class="imgpick"><div class="pv" id="pv">${cur?`<img src="${cur}">`:'なし'}</div>
+    <input type="file" id="imgIn" accept="image/*" hidden><button type="button" class="btn small" id="imgBtn">写真を選ぶ</button><button type="button" class="btn small" id="imgClr">消す</button></div></div>`;
+}
+function bindImg(v,state){
+  v.querySelector('#imgBtn').onclick=()=>v.querySelector('#imgIn').click();
+  v.querySelector('#imgClr').onclick=()=>{ state.img=''; v.querySelector('#pv').textContent='なし'; };
+  v.querySelector('#imgIn').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; state.img=await shrink(f); v.querySelector('#pv').innerHTML=`<img src="${state.img}">`; };
+}
+function shrink(file){ return new Promise(res=>{
+  const r=new FileReader(); r.onload=()=>{ const im=new Image(); im.onload=()=>{
+    const M=480, k=Math.min(1,M/Math.max(im.width,im.height)); const c=document.createElement('canvas');
+    c.width=Math.round(im.width*k); c.height=Math.round(im.height*k); c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+    res(c.toDataURL('image/jpeg',.82)); }; im.src=r.result; }; r.readAsDataURL(file); }); }
+
+function toolForm(t){
+  const st={img:t?.img||''};
+  const v=sheet(`<h2>${t?'ツールを直す':'ツールを追加'}</h2>
+    <div class="f"><label>URL</label><input type="url" id="fUrl" placeholder="https://" value="${esc(t?.url||'')}" inputmode="url"></div>
+    <div class="f"><label>名前</label><input type="text" id="fTitle" placeholder="空ならURLから付ける" value="${esc(t?.title||'')}"></div>
+    <div class="f"><label>メモ（任意）</label><textarea id="fMemo" style="min-height:70px" placeholder="何に使うか、誰にもらったか、など">${esc(t?.memo||'')}</textarea></div>
+    ${imgField(st.img)}
+    <div class="row">${t?`<button class="btn danger" id="del">削除</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>`);
+  bindImg(v,st);
+  v.querySelector('#cancel').onclick=close;
+  if(t) v.querySelector('#del').onclick=()=>{ if(confirm('このツールを消す？')){ S.tools=S.tools.filter(x=>x.id!==t.id); save(); close(); render(); } };
+  v.querySelector('#ok').onclick=()=>{
+    let url=v.querySelector('#fUrl').value.trim(); if(url&&!/^https?:\/\//i.test(url)) url='https://'+url;
+    if(!url||!domainOf(url)){ toast('URLを入れてね'); return; }
+    const o={id:t?.id||uid(),url,title:v.querySelector('#fTitle').value.trim()||domainOf(url),memo:v.querySelector('#fMemo').value.trim(),img:st.img,created:t?.created||Date.now()};
+    if(t) S.tools=S.tools.map(x=>x.id===t.id?o:x); else S.tools.unshift(o);
+    save(); close(); render(); toast(t?'直した！！':'追加した！！');
+  };
+  setTimeout(()=>v.querySelector(t?'#fTitle':'#fUrl').focus(),50);
+}
+function promptForm(p){
+  const st={img:p?.img||''};
+  const opts=`<option value="">（箱なし）</option>`+S.boxes.map(b=>`<option value="${b.id}" ${p?.boxId===b.id||(!p&&box===b.id)?'selected':''}>${esc(b.name)}</option>`).join('');
+  const v=sheet(`<h2>${p?'プロンプトを直す':'プロンプトを追加'}</h2>
+    <div class="f"><label>タイトル</label><input type="text" id="fTitle" placeholder="例：投稿の1行目を10案出す" value="${esc(p?.title||'')}"></div>
+    <div class="f"><label>箱</label><select id="fBox">${opts}</select></div>
+    <div class="f"><label>説明（任意）</label><input type="text" id="fDesc" placeholder="どんなときに使うか、ひとこと" value="${esc(p?.desc||'')}"></div>
+    ${imgField(st.img)}
+    <div class="f"><label>プロンプト本文</label><textarea id="fBody" class="body" placeholder="ここに貼る">${esc(p?.body||'')}</textarea></div>
+    <div class="row">${p?`<button class="btn danger" id="del">削除</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>`);
+  bindImg(v,st);
+  v.querySelector('#cancel').onclick=close;
+  if(p) v.querySelector('#del').onclick=()=>{ if(confirm('このプロンプトを消す？')){ S.prompts=S.prompts.filter(x=>x.id!==p.id); save(); close(); render(); } };
+  v.querySelector('#ok').onclick=()=>{
+    const title=v.querySelector('#fTitle').value.trim(), body=v.querySelector('#fBody').value;
+    if(!title){ toast('タイトルを入れてね'); return; } if(!body.trim()){ toast('本文を入れてね'); return; }
+    const o={id:p?.id||uid(),title,boxId:v.querySelector('#fBox').value,desc:v.querySelector('#fDesc').value.trim(),img:st.img,body,created:p?.created||Date.now()};
+    if(p) S.prompts=S.prompts.map(x=>x.id===p.id?o:x); else S.prompts.unshift(o);
+    save(); close(); render(); toast(p?'直した！！':'追加した！！');
+  };
+  setTimeout(()=>v.querySelector('#fTitle').focus(),50);
+}
+function boxForm(b){
+  const v=sheet(`<h2>${b?'箱の名前を変える':'箱を作る'}</h2>
+    <div class="f"><label>箱の名前</label><input type="text" id="fName" placeholder="例：Threads投稿 / 分析 / 記事" value="${esc(b?.name||'')}"></div>
+    <div class="row">${b?`<button class="btn danger" id="del">箱を消す</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>
+    ${b?`<div class="note" style="margin-top:14px">箱を消しても、中のプロンプトは消えない（「箱なし」になる）</div>`:''}`);
+  v.querySelector('#cancel').onclick=close;
+  if(b) v.querySelector('#del').onclick=()=>{ if(confirm('この箱を消す？中のプロンプトは残る')){ S.boxes=S.boxes.filter(x=>x.id!==b.id); S.prompts.forEach(p=>{ if(p.boxId===b.id) p.boxId=''; }); if(box===b.id) box='all'; save(); close(); render(); } };
+  v.querySelector('#ok').onclick=()=>{
+    const name=v.querySelector('#fName').value.trim(); if(!name){ toast('名前を入れてね'); return; }
+    if(b) b.name=name; else { const nb={id:uid(),name}; S.boxes.push(nb); box=nb.id; }
+    save(); close(); render();
+  };
+  setTimeout(()=>v.querySelector('#fName').focus(),50);
+}
+function menu(items){
+  const v=sheet(`<div class="menu">${items.map((it,i)=>`<button data-i="${i}" class="${it.danger?'danger':''}">${it.label}</button>`).join('')}<button data-i="-1">やめる</button></div>`);
+  v.querySelectorAll('.menu button').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; close(); if(i>=0) items[i].fn(); });
+}
+
+/* ---------- copy / toast ---------- */
+async function copyText(t){
+  try{ await navigator.clipboard.writeText(t); return true; }catch(e){}
+  const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
+  let ok=false; try{ ok=document.execCommand('copy'); }catch(e){} ta.remove(); return ok;
+}
+let tt; function toast(m){ const e=$('#toast'); e.textContent=m; e.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>e.classList.remove('show'),1500); }
+
+/* ---------- backup ---------- */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  const d=new Date(), z=n=>String(n).padStart(2,'0'); a.download=`tools-backup-${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function importJSON(file){
+  const r=new FileReader(); r.onload=()=>{ try{
+    const d=JSON.parse(r.result); if(!d||!Array.isArray(d.tools)||!Array.isArray(d.prompts)) throw 0;
+    const mode=confirm('今あるものに「足す」ならOK、「置き換える」ならキャンセル');
+    if(mode){ const have=new Set([...S.tools,...S.prompts,...S.boxes].map(x=>x.id));
+      d.boxes?.forEach(b=>{ if(!have.has(b.id)) S.boxes.push(b); }); d.tools.forEach(t=>{ if(!have.has(t.id)) S.tools.push(t); }); d.prompts.forEach(p=>{ if(!have.has(p.id)) S.prompts.push(p); });
+    } else { S={v:1,seeded:true,tools:d.tools,boxes:d.boxes||[],prompts:d.prompts,banner:false}; }
+    save(); render(); toast('読み込んだ！！');
+  }catch(e){ toast('このファイルは読めなかった、、、'); } }; r.readAsText(file);
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; render(); });
+$('#q').oninput=e=>{ q=e.target.value.trim(); render(); };
+$('#fab').onclick=()=>tab==='tools'?toolForm():promptForm();
+$('#bannerClose').onclick=()=>{ S.banner=false; save(); render(); };
+$('#exportBtn').onclick=exportJSON;
+$('#importBtn').onclick=()=>$('#importFile').click();
+$('#importFile').onchange=e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; };
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.moreTool){ e.preventDefault(); const t=S.tools.find(x=>x.id===b.dataset.moreTool); menu([{label:'開く',fn:()=>window.open(t.url,'_blank','noopener')},{label:'URLをコピー',fn:async()=>{ await copyText(t.url); toast('コピーした！！'); }},{label:'直す',fn:()=>toolForm(t)},{label:'削除',danger:true,fn:()=>{ if(confirm('このツールを消す？')){ S.tools=S.tools.filter(x=>x.id!==t.id); save(); render(); } }}]); }
+  if(b.dataset.morePrompt){ const p=S.prompts.find(x=>x.id===b.dataset.morePrompt); menu([{label:'直す',fn:()=>promptForm(p)},{label:'削除',danger:true,fn:()=>{ if(confirm('このプロンプトを消す？')){ S.prompts=S.prompts.filter(x=>x.id!==p.id); save(); render(); } }}]); }
+  if(b.dataset.copy){ const p=S.prompts.find(x=>x.id===b.dataset.copy); const ok=await copyText(p.body); if(ok){ b.classList.add('done'); b.lastChild.textContent='コピーした'; toast('コピーした！！'); setTimeout(()=>{ b.classList.remove('done'); b.lastChild.textContent='コピー'; },1400); } else toast('コピーできなかった、、、'); }
+  if(b.dataset.peek){ const pre=document.querySelector(`pre[data-body="${b.dataset.peek}"]`); pre.hidden=!pre.hidden; b.textContent=pre.hidden?'中身':'閉じる'; }
+  if(b.dataset.box){ if(b.dataset.box==='__new') boxForm(); else { box=b.dataset.box; render(); } }
+});
+$('#chips').addEventListener('contextmenu',e=>{ const c=e.target.closest('.chip'); if(c&&c.dataset.box&&!['all','__new'].includes(c.dataset.box)){ e.preventDefault(); boxForm(S.boxes.find(b=>b.id===c.dataset.box)); } });
+let lp; $('#chips').addEventListener('touchstart',e=>{ const c=e.target.closest('.chip'); if(c&&c.dataset.box&&!['all','__new'].includes(c.dataset.box)) lp=setTimeout(()=>boxForm(S.boxes.find(b=>b.id===c.dataset.box)),550); },{passive:true});
+['touchend','touchmove','touchcancel'].forEach(ev=>$('#chips').addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
+render();
+</script>
+</body>
+</html>
