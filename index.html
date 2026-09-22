@@ -456,8 +456,11 @@ async function shareSheet(){
     <div class="qr" id="qr"><div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div></div>
     <div class="f"><label>リンク</label><div class="linkbox" id="lk"></div></div>
     <div class="row"><button class="btn" id="cancel">閉じる</button><span class="spacer"></span><button class="btn primary" id="cp">リンクをコピー</button></div>
-    <div class="note" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。自分で載せたサムネ画像だけは入らないので、必要なら向こうで付け直してね。</div>`);
+    <div class="note" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。自分で載せたサムネ画像だけは入らないので、必要なら向こうで付け直してね。</div>
+    <div class="f" style="margin-top:18px"><label>受け取る側はこっち：届いたリンクを貼る</label><input type="text" id="rcv" placeholder="https://shiochann.github.io/tools/#h=…" inputmode="url" autocomplete="off"></div>
+    <div class="row"><span class="spacer"></span><button class="btn" id="rcvBtn">貼ったリンクを読み込む</button></div>`);
   v.querySelector('#cancel').onclick=close;
+  v.querySelector('#rcvBtn').onclick=()=>{ const t=v.querySelector('#rcv').value.trim(); const i=t.indexOf('#'); if(i<0){ toast('引き継ぎリンクを貼ってね'); return; } receiveHash(t.slice(i)); };
   let url=''; const lk=v.querySelector('#lk'), qr=v.querySelector('#qr');
   try{ url=location.origin+location.pathname+'#'+await encodeShare(); }catch(e){ lk.textContent='リンクを作れなかった、、、'; qr.innerHTML=''; return; }
   lk.textContent=url;
@@ -469,9 +472,12 @@ async function shareSheet(){
 }
 async function receiveShare(){
   if(!/^#[hj]=/.test(location.hash)) return;
+  const h=location.hash; history.replaceState(null,'',location.pathname+location.search);
+  receiveHash(h);
+}
+async function receiveHash(hash){
   let d=null;
-  try{ d=await decodeShare(location.hash); }catch(e){ d=null; }
-  history.replaceState(null,'',location.pathname+location.search);
+  try{ d=await decodeShare(hash); }catch(e){ d=null; }
   if(!d){ toast('このリンクは読めなかった、、、'); return; }
   const n=`ツール${d.tools.length}・箱${(d.boxes||[]).length}・プロンプト${d.prompts.length}`;
   const v=sheet(`<h2>引き継ぎデータを受け取る</h2>
