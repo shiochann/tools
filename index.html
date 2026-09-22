@@ -134,6 +134,8 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
 .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
 .btn.danger{color:var(--danger);border-color:transparent}
 .btn.small{padding:7px 12px;font-size:13px}
+.qr{display:flex;justify-content:center;margin:6px 0 12px}.qr>div,.qr img{background:#fff;padding:10px;border-radius:14px;border:1px solid var(--line)}.qr img{display:block}
+.linkbox{font:12px/1.5 ui-monospace,Menlo,monospace;color:var(--sub);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;max-height:64px;overflow:hidden;word-break:break-all}
 .row{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
 .row .spacer{flex:1}
 .menu{display:flex;flex-direction:column;gap:2px}
@@ -183,8 +185,9 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
   </section>
 
   <footer class="foot">
-    <div>データはこの端末のブラウザの中だけに保存される。サイトが更新されても消えない。端末を替えるときはバックアップで引っ越してね。</div>
+    <div>データはこの端末のブラウザの中だけに保存される。サイトが更新されても消えない。スマホやPCにも同じものを出したいときは「引き継ぎリンク」で持っていってね。</div>
     <div class="links">
+      <button class="btn small primary" id="linkBtn">引き継ぎリンク（QR）</button>
       <button class="btn small" id="exportBtn">バックアップを書き出す</button>
       <button class="btn small" id="importBtn">読み込む</button>
       <input type="file" id="importFile" accept="application/json" hidden>
@@ -412,13 +415,71 @@ function exportJSON(){
 }
 function importJSON(file){
   const r=new FileReader(); r.onload=()=>{ try{
-    const d=JSON.parse(r.result); if(!d||!Array.isArray(d.tools)||!Array.isArray(d.prompts)) throw 0;
-    const mode=confirm('今あるものに「足す」ならOK、「置き換える」ならキャンセル');
-    if(mode){ const have=new Set([...S.tools,...S.prompts,...S.boxes].map(x=>x.id));
-      d.boxes?.forEach(b=>{ if(!have.has(b.id)) S.boxes.push(b); }); d.tools.forEach(t=>{ if(!have.has(t.id)) S.tools.push(t); }); d.prompts.forEach(p=>{ if(!have.has(p.id)) S.prompts.push(p); });
-    } else { S={v:1,seeded:true,tools:d.tools,boxes:d.boxes||[],prompts:d.prompts,banner:false,prefs:S.prefs}; }
-    save(); render(); toast('読み込んだ！！');
+    const d=JSON.parse(r.result); if(!validData(d)) throw 0;
+    applyImport(d, confirm('今あるものに「足す」ならOK、「置き換える」ならキャンセル'));
   }catch(e){ toast('このファイルは読めなかった、、、'); } }; r.readAsText(file);
+}
+function validData(d){ return !!d && Array.isArray(d.tools) && Array.isArray(d.prompts); }
+function applyImport(d,add){
+  if(add){ const have=new Set([...S.tools,...S.prompts,...S.boxes].map(x=>x.id));
+    (d.boxes||[]).forEach(b=>{ if(!have.has(b.id)) S.boxes.push(b); }); d.tools.forEach(t=>{ if(!have.has(t.id)) S.tools.push(t); }); d.prompts.forEach(p=>{ if(!have.has(p.id)) S.prompts.push(p); });
+  } else { S={v:1,seeded:true,tools:d.tools,boxes:d.boxes||[],prompts:d.prompts,banner:false,prefs:S.prefs}; }
+  save(); render(); toast('読み込んだ！！');
+}
+
+/* ---------- 引き継ぎリンク（URLの#にデータを入れる。サーバーには送られない） ---------- */
+const B64='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+function b64u(bytes){ let s=''; for(let i=0;i<bytes.length;i+=3){ const a=bytes[i],b=bytes[i+1],c=bytes[i+2],n=(a<<16)|((b||0)<<8)|(c||0); s+=B64[n>>18&63]+B64[n>>12&63]+(b===undefined?'':B64[n>>6&63])+(c===undefined?'':B64[n&63]); } return s; }
+function unb64u(str){ const m={}; [...B64].forEach((c,i)=>m[c]=i); const out=[]; for(let i=0;i<str.length;i+=4){ const a=m[str[i]],b=m[str[i+1]],c=m[str[i+2]],d=m[str[i+3]]; const n=(a<<18)|(b<<12)|((c||0)<<6)|(d||0); out.push(n>>16&255); if(c!==undefined) out.push(n>>8&255); if(d!==undefined) out.push(n&255); } return new Uint8Array(out); }
+async function pipeBytes(bytes,stream){ const r=new Blob([bytes]).stream().pipeThrough(stream); return new Uint8Array(await new Response(r).arrayBuffer()); }
+function sharePayload(){
+  // 自分で載せたサムネ（data:画像）は大きすぎるのでリンクには入れない。URLのサムネはそのまま
+  const strip=x=>({...x,img:(x.img||'').startsWith('data:')?'':x.img});
+  return {v:1,tools:S.tools.map(strip),boxes:S.boxes,prompts:S.prompts.map(strip)};
+}
+async function encodeShare(){
+  const bytes=new TextEncoder().encode(JSON.stringify(sharePayload()));
+  if(window.CompressionStream){ try{ return 'h='+b64u(await pipeBytes(bytes,new CompressionStream('deflate-raw'))); }catch(e){} }
+  return 'j='+b64u(bytes);
+}
+async function decodeShare(hash){
+  const m=/^#?([hj])=([A-Za-z0-9\-_]+)$/.exec(hash||''); if(!m) return null;
+  let bytes=unb64u(m[2]);
+  if(m[1]==='h'){ if(!window.DecompressionStream) throw new Error('old'); bytes=await pipeBytes(bytes,new DecompressionStream('deflate-raw')); }
+  const d=JSON.parse(new TextDecoder().decode(bytes)); return validData(d)?d:null;
+}
+const QR_MAX=2800; // QRに入る上限（バイト）。超えたらリンクだけ出す
+function loadQR(){ return new Promise((res,rej)=>{ if(window.QRCode) return res(); const sc=document.createElement('script'); sc.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js'; sc.onload=res; sc.onerror=rej; document.head.appendChild(sc); }); }
+async function shareSheet(){
+  const v=sheet(`<h2>引き継ぎリンク</h2>
+    <div class="f"><div style="color:var(--sub);font-size:13px">スマホのカメラでQRを読むか、リンクをコピーして自分にLINEで送る。開いた端末で「足す」か「置き換える」を選べば、今ここにあるツール・箱・プロンプトがそのまま出る。</div></div>
+    <div class="qr" id="qr"><div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div></div>
+    <div class="f"><label>リンク</label><div class="linkbox" id="lk"></div></div>
+    <div class="row"><button class="btn" id="cancel">閉じる</button><span class="spacer"></span><button class="btn primary" id="cp">リンクをコピー</button></div>
+    <div class="note" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。自分で載せたサムネ画像だけは入らないので、必要なら向こうで付け直してね。</div>`);
+  v.querySelector('#cancel').onclick=close;
+  let url=''; const lk=v.querySelector('#lk'), qr=v.querySelector('#qr');
+  try{ url=location.origin+location.pathname+'#'+await encodeShare(); }catch(e){ lk.textContent='リンクを作れなかった、、、'; qr.innerHTML=''; return; }
+  lk.textContent=url;
+  v.querySelector('#cp').onclick=async()=>{ if(await copyText(url)) toast('コピーした！！'); else toast('コピーできなかった、、、'); };
+  const bytes=new TextEncoder().encode(url).length;
+  if(bytes>QR_MAX){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px;max-width:280px">データが多くてQRには入らなかった（${Math.round(bytes/1024)}KB）。リンクをコピーして、LINEで自分に送って開いてね。</div>`; return; }
+  try{ await loadQR(); const size=Math.min(300, window.innerWidth-80); qr.innerHTML='<div></div>'; new QRCode(qr.firstChild,{text:url,width:size,height:size,correctLevel:QRCode.CorrectLevel.L}); }
+  catch(e){ qr.innerHTML=`<div style="color:var(--sub);font-size:13px;padding:14px 16px">QRを作れなかった（オフライン？）。リンクをコピーして送ってね。</div>`; }
+}
+async function receiveShare(){
+  if(!/^#[hj]=/.test(location.hash)) return;
+  let d=null;
+  try{ d=await decodeShare(location.hash); }catch(e){ d=null; }
+  history.replaceState(null,'',location.pathname+location.search);
+  if(!d){ toast('このリンクは読めなかった、、、'); return; }
+  const n=`ツール${d.tools.length}・箱${(d.boxes||[]).length}・プロンプト${d.prompts.length}`;
+  const v=sheet(`<h2>引き継ぎデータを受け取る</h2>
+    <div class="f"><div style="color:var(--sub);font-size:13px">${n} が入っている。今この端末にあるものに<b>足す</b>か、この端末のものを消して<b>置き換える</b>か選んでね。</div></div>
+    <div class="row"><button class="btn" id="no">やめる</button><span class="spacer"></span><button class="btn danger" id="rp">置き換える</button><button class="btn primary" id="ad">足す</button></div>`);
+  v.querySelector('#no').onclick=close;
+  v.querySelector('#ad').onclick=()=>{ close(); applyImport(d,true); };
+  v.querySelector('#rp').onclick=()=>{ if(confirm('この端末にあるものを全部消して置き換える？')){ close(); applyImport(d,false); } };
 }
 
 /* ---------- events ---------- */
@@ -429,6 +490,7 @@ $('#gear').onclick=settingsSheet;
 $('#sortBtn').onclick=()=>{ sorting=!sorting; render(); if(!sorting) toast('並び順を保存した！！'); };
 $('#bannerClose').onclick=()=>{ S.banner=false; save(); render(); };
 $('#exportBtn').onclick=exportJSON;
+$('#linkBtn').onclick=shareSheet;
 $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; };
 document.addEventListener('click',async e=>{
@@ -446,6 +508,7 @@ $('#chips').addEventListener('contextmenu',e=>{ const c=e.target.closest('.chip'
 let lp; $('#chips').addEventListener('touchstart',e=>{ const c=e.target.closest('.chip'); if(c&&c.dataset.box&&!['all','__new'].includes(c.dataset.box)) lp=setTimeout(()=>boxForm(S.boxes.find(b=>b.id===c.dataset.box)),550); },{passive:true});
 ['touchend','touchmove','touchcancel'].forEach(ev=>$('#chips').addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
 render();
+receiveShare();
 </script>
 </body>
 </html>
