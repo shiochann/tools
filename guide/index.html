@@ -23,9 +23,9 @@ body { background: #FFFFFF; margin: 0; }
 .xas .pill.white { background: #FFFFFF; color: var(--blue); }
 .xas .pill.big { padding: 18px 40px; font-size: 17px; }
 .xas .hero { padding-top: 28px; padding-bottom: 72px; }
-.xas .hero .cols { display: flex; flex-wrap: wrap; gap: 40px; align-items: center; }
+.xas .hero .cols { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
 .xas .hero .txt { flex: 1 1 340px; min-width: 0; }
-.xas .hero .mock { flex: 0 1 340px; min-width: 0; margin: 0 auto; }
+.xas .hero .mock { flex: 0 1 300px; min-width: 0; margin: 0 auto; padding-top: 6px; }
 .xas .kicker { display: inline-block; background: var(--pale); color: #0A0A0A; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 4px 16px; margin: 0 0 22px; }
 .xas h1 { font-family: "Jost", sans-serif; font-weight: 500; letter-spacing: .06em; font-size: clamp(44px, 7vw, 72px); line-height: 1; margin: 0 0 14px; color: var(--blue); }
 .xas .catch { font-size: clamp(22px, 3.6vw, 32px); font-weight: 700; color: var(--blue); line-height: 1.5; margin: 0 0 18px; }
@@ -33,7 +33,7 @@ body { background: #FFFFFF; margin: 0; }
 .xas .cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .xas .push { margin: 22px 0 0; font-size: 15px; }
 .xas .push b { color: var(--blue); }
-.xas .phoneshot { display: block; width: 100%; max-width: 320px; margin: 0 auto; border-radius: 26px; border: 1px solid var(--pale); box-shadow: 0 18px 50px rgba(24, 155, 188, .18); }
+.xas .phoneshot { display: block; width: 100%; max-width: 300px; max-height: 540px; object-fit: cover; object-position: top; margin: 0 auto; border-radius: 26px; border: 1px solid var(--pale); box-shadow: 0 18px 50px rgba(24, 155, 188, .18); }
 .xas section { padding: 84px 0; }
 .xas section.tint { background: var(--mist); }
 .xas section.sea { background: var(--blue); color: #FFFFFF; }
@@ -81,6 +81,7 @@ body { background: #FFFFFF; margin: 0; }
   .xas .flow li { padding: 20px; gap: 12px; }
   .xas .flow .n { width: 38px; font-size: 24px; }
   .xas .pill.big { width: 100%; }
+  .xas .phoneshot { max-width: 240px; max-height: 420px; }
   .xas .nav .pill { padding: 9px 18px; font-size: 14px; }
 }
 </style>
