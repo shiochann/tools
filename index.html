@@ -248,10 +248,11 @@ function applyPrefs(){
   const W=[255,255,255], K=[12,15,18];
   r.style.setProperty('--pale',dark?mix(a,K,.62):mix(a,W,.78));
   // 薄い背景（検索・タブ・サムネ枠）と線の色も、選んだ色に合わせて薄くする
-  r.style.setProperty('--mist',dark?mix(a,K,.83):mix(a,W,.93));
-  r.style.setProperty('--line',dark?mix(a,K,.78):mix(a,W,.84));
-  if(dark){ r.style.setProperty('--bg',mix(a,K,.93)); r.style.setProperty('--card',mix(a,K,.88)); }
-  else { r.style.removeProperty('--bg'); r.style.removeProperty('--card'); }
+  r.style.setProperty('--mist',dark?mix(a,K,.83):mix(a,W,.90));
+  r.style.setProperty('--line',dark?mix(a,K,.78):mix(a,W,.82));
+  // ページ全体の背景も選んだ色寄りに（ライトはごく薄く。カードは白のまま浮かせる）
+  r.style.setProperty('--bg',dark?mix(a,K,.93):mix(a,W,.955));
+  if(dark) r.style.setProperty('--card',mix(a,K,.88)); else r.style.removeProperty('--card');
   r.style.setProperty('--shadow',`0 2px 10px ${dark?'rgba(0,0,0,.35)':mix(a,W,0)+'1A'}`);
   document.querySelector('meta[name=theme-color]').content=a;
 }
