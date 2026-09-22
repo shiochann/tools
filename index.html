@@ -209,14 +209,9 @@ a.copy{text-decoration:none}
 
 <script>
 const KEY='shio_tools_v1';
-const SEED_IMG='https://shiochann.github.io/tools/img/sns-analysis.jpg';
-const SEED_TOOLS=[{
-  id:'seed-sns-analysis',
-  title:'SNSアカウント分析プロンプト',
-  url:'https://shiochann.github.io/shio-tools/tools/sns-account-analysis/',
-  memo:'アカウントURLを貼るだけで、伸びてる投稿の1行目の型・ワード・ターゲットを分析（無料配布）',
-  img:SEED_IMG, created:Date.now()
-}];
+// 最初から入れるものは無し（2026-09-22 しおちゃんの指示で、分析プロンプトのカードを外した）
+const SEED_TOOLS=[];
+const SEED_URL='https://shiochann.github.io/shio-tools/tools/sns-account-analysis/';
 const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36);
 const $=s=>document.querySelector(s);
 
@@ -227,8 +222,9 @@ function load(){
   if(!d){ d={v:1,seeded:true,tools:SEED_TOOLS.map(t=>({...t})),boxes:[],prompts:[],banner:true}; save(d); }
   // 将来 形を変えるときは、ここで d.v を見て読み替える（データは消さない）
   if(!d.boxes) d.boxes=[]; if(!d.prompts) d.prompts=[]; if(!d.tools) d.tools=[]; if(!d.contents) d.contents=[]; if(!d.cboxes) d.cboxes=[];
-  // 既存ユーザーの seed にサムネを付ける（自分で別の画像を載せていたら触らない）
-  const seed=d.tools.find(t=>t.id==='seed-sns-analysis'); if(seed && !seed.img){ seed.img=SEED_IMG; save(d); }
+  // 以前は分析プロンプトのカードが最初から入っていた。手を加えていないものだけ外す（名前やURLを変えていたら残す）
+  const seed=d.tools.find(t=>t.id==='seed-sns-analysis');
+  if(seed && seed.url===SEED_URL && seed.title==='SNSアカウント分析プロンプト'){ d.tools=d.tools.filter(t=>t!==seed); save(d); }
   return d;
 }
 function save(d){ try{ localStorage.setItem(KEY,JSON.stringify(d||S)); }catch(e){ toast('保存できなかった、、、容量がいっぱいかも'); } }
