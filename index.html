@@ -109,6 +109,9 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
 .copy.done{background:#2E9E6B}
 .copy svg{width:16px;height:16px}
 .peek{padding:10px 14px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:13px}
+a.copy{text-decoration:none}
+.pr .ctext{grid-column:1/-1;margin:0;background:var(--mist);border-radius:10px;padding:12px 14px;font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:420px;overflow:auto}
+.pr .lnk{color:var(--sub);font-size:12px;margin-top:2px;word-break:break-all}
 .pr pre{grid-column:1/-1;margin:0;background:var(--mist);border-radius:10px;padding:12px;font:13px/1.6 ui-monospace,Menlo,monospace;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto;color:var(--ink)}
 
 /* fab */
@@ -161,7 +164,7 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
 <body>
 <div class="wrap">
   <header>
-    <div class="brand"><h1>tools</h1><small>自分専用のツール＆プロンプト保管庫</small><button class="gear" id="gear" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
+    <div class="brand"><h1>tools</h1><small>ツール・プロンプト・コンテンツ</small><button class="gear" id="gear" aria-label="設定"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></div>
     <div class="search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="さがす" autocomplete="off">
@@ -175,6 +178,7 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
   <div class="tabs" role="tablist">
     <button role="tab" data-tab="tools" aria-selected="true">ツール</button>
     <button role="tab" data-tab="prompts" aria-selected="false">プロンプト</button>
+    <button role="tab" data-tab="contents" aria-selected="false">コンテンツ</button>
   </div>
 
   <div class="toolbar"><span class="spacer"></span><button class="sortbtn" id="sortBtn" aria-pressed="false">並べ替え</button></div>
@@ -182,6 +186,10 @@ header{padding:calc(18px + env(safe-area-inset-top)) 0 10px}
   <section id="tabPrompts" hidden>
     <div class="chips" id="chips"></div>
     <div class="list" id="plist"></div>
+  </section>
+  <section id="tabContents" hidden>
+    <div class="chips" id="cchips"></div>
+    <div class="list" id="clist"></div>
   </section>
 
   <footer class="foot">
@@ -218,14 +226,14 @@ function load(){
   try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ d=null; }
   if(!d){ d={v:1,seeded:true,tools:SEED_TOOLS.map(t=>({...t})),boxes:[],prompts:[],banner:true}; save(d); }
   // 将来 形を変えるときは、ここで d.v を見て読み替える（データは消さない）
-  if(!d.boxes) d.boxes=[]; if(!d.prompts) d.prompts=[]; if(!d.tools) d.tools=[];
+  if(!d.boxes) d.boxes=[]; if(!d.prompts) d.prompts=[]; if(!d.tools) d.tools=[]; if(!d.contents) d.contents=[]; if(!d.cboxes) d.cboxes=[];
   // 既存ユーザーの seed にサムネを付ける（自分で別の画像を載せていたら触らない）
   const seed=d.tools.find(t=>t.id==='seed-sns-analysis'); if(seed && !seed.img){ seed.img=SEED_IMG; save(d); }
   return d;
 }
 function save(d){ try{ localStorage.setItem(KEY,JSON.stringify(d||S)); }catch(e){ toast('保存できなかった、、、容量がいっぱいかも'); } }
 
-let tab='tools', box='all', q='', sorting=false;
+let tab='tools', box='all', cbox='all', q='', sorting=false;
 const PRESETS=['#189BBC','#E86A8A','#F2A33A','#3FA66B','#6C5CE7','#2D3A45','#C2185B','#00897B'];
 S.prefs=S.prefs||{theme:'auto',accent:'#189BBC'};
 function hex2rgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join(''); return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); }
@@ -255,11 +263,12 @@ const hit=(...f)=>!q||f.join(' ').toLowerCase().includes(q.toLowerCase());
 function render(){
   $('#tabTools').hidden = tab!=='tools';
   $('#tabPrompts').hidden = tab!=='prompts';
+  $('#tabContents').hidden = tab!=='contents';
   document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
   $('#banner').hidden = !S.banner;
   $('#sortBtn').setAttribute('aria-pressed',sorting); $('#sortBtn').textContent=sorting?'並べ替え中（完了）':'並べ替え';
   $('#fab').hidden=sorting;
-  tab==='tools'?renderTools():renderPrompts();
+  tab==='tools'?renderTools():tab==='prompts'?renderPrompts():renderContents();
 }
 function renderTools(){
   const list=S.tools.filter(t=>hit(t.title,t.url,t.memo));
@@ -294,6 +303,31 @@ function renderPrompts(){
         <button class="peek" data-peek="${p.id}" ${sorting?'hidden':''}>中身</button>
       </div>
       <pre hidden data-body="${p.id}">${esc(p.body)}</pre>
+    </div>`).join('');
+}
+
+function renderContents(){
+  const chips=$('#cchips');
+  chips.innerHTML=`<button class="chip" data-cbox="all" aria-pressed="${cbox==='all'}">すべて</button>`+
+    S.cboxes.map((b,i)=>`<button class="chip" data-cbox="${b.id}" aria-pressed="${cbox===b.id}">${esc(b.name)}${sorting?`<span class="mvin"><span data-mv-cbox="${b.id}" data-dir="-1" ${i===0?'hidden':''}>‹</span><span data-mv-cbox="${b.id}" data-dir="1" ${i===S.cboxes.length-1?'hidden':''}>›</span></span>`:''}</button>`).join('')+
+    `<button class="chip add" data-cbox="__new">＋ ジャンルを作る</button>`;
+  const list=S.contents.filter(c=>(cbox==='all'||c.boxId===cbox)&&hit(c.title,c.desc,c.body,c.url));
+  const el=$('#clist');
+  if(!list.length){ el.innerHTML=`<div class="empty"><b>${q?'見つからなかった':'まだ何もない'}</b>${q?'':'右下の＋から、無料配布や読み物を入れてね。ジャンルで分けておくと探しやすい'}</div>`; return; }
+  const bname=id=>(S.cboxes.find(b=>b.id===id)||{}).name||'';
+  const DOC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
+  el.innerHTML=list.map(c=>`
+    <div class="pr" data-id="${c.id}">
+      <div class="thumb">${c.img?`<img src="${c.img}" alt="">`:(c.url&&favicon(c.url)?`<img src="${favicon(c.url)}" alt="" loading="lazy" style="width:28px;height:28px;object-fit:contain" onerror="this.remove()">`:DOC)}</div>
+      <div class="head">${bname(c.boxId)?`<span class="tag">${esc(bname(c.boxId))}</span>`:''}<div class="t">${esc(c.title)}</div>${c.desc?`<div class="desc">${esc(c.desc)}</div>`:''}${c.url?`<div class="lnk">${esc(domainOf(c.url))}</div>`:''}</div>
+      <button class="more" data-more-content="${c.id}" aria-label="メニュー"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+      <div class="actions">
+        ${sorting?`<div class="mv"><button data-mv-content="${c.id}" data-dir="-1" aria-label="上へ">${ARR_UP}</button><button data-mv-content="${c.id}" data-dir="1" aria-label="下へ">${ARR_DN}</button></div><span style="flex:1"></span>`:''}
+        ${!sorting&&c.url?`<a class="copy" href="${esc(c.url)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>開く</a>`:''}
+        ${!sorting&&c.body?`<button class="${c.url?'peek':'copy'}" data-read="${c.id}">読む</button>`:''}
+        ${!sorting&&c.body?`<button class="peek" data-ccopy="${c.id}">コピー</button>`:''}
+      </div>
+      ${c.body?`<div class="ctext" hidden data-cbody="${c.id}">${esc(c.body)}</div>`:''}
     </div>`).join('');
 }
 
@@ -365,16 +399,43 @@ function promptForm(p){
   };
   setTimeout(()=>v.querySelector('#fTitle').focus(),50);
 }
-function boxForm(b){
-  const v=sheet(`<h2>${b?'箱の名前を変える':'箱を作る'}</h2>
-    <div class="f"><label>箱の名前</label><input type="text" id="fName" placeholder="例：Threads投稿 / 分析 / 記事" value="${esc(b?.name||'')}"></div>
-    <div class="row">${b?`<button class="btn danger" id="del">箱を消す</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>
-    ${b?`<div class="note" style="margin-top:14px">箱を消しても、中のプロンプトは消えない（「箱なし」になる）</div>`:''}`);
+function contentForm(c){
+  const st={img:c?.img||''};
+  const opts=`<option value="">（ジャンルなし）</option>`+S.cboxes.map(b=>`<option value="${b.id}" ${c?.boxId===b.id||(!c&&cbox===b.id)?'selected':''}>${esc(b.name)}</option>`).join('');
+  const v=sheet(`<h2>${c?'コンテンツを直す':'コンテンツを追加'}</h2>
+    <div class="f"><label>タイトル</label><input type="text" id="fTitle" placeholder="例：Threads攻略PDF / 伸びた投稿の考え方" value="${esc(c?.title||'')}"></div>
+    <div class="f"><label>ジャンル</label><select id="fBox">${opts}</select></div>
+    <div class="f"><label>説明（任意）</label><input type="text" id="fDesc" placeholder="誰にもらったか、どんな内容か、ひとこと" value="${esc(c?.desc||'')}"></div>
+    <div class="f"><label>URL（任意）</label><input type="url" id="fUrl" placeholder="配布ページやPDFのリンク" value="${esc(c?.url||'')}" inputmode="url"></div>
+    ${imgField(st.img)}
+    <div class="f"><label>本文（任意）</label><textarea id="fBody" placeholder="文章のコンテンツはここに貼る。URLだけなら空でOK">${esc(c?.body||'')}</textarea></div>
+    <div class="row">${c?`<button class="btn danger" id="del">削除</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>`);
+  bindImg(v,st);
   v.querySelector('#cancel').onclick=close;
-  if(b) v.querySelector('#del').onclick=()=>{ if(confirm('この箱を消す？中のプロンプトは残る')){ S.boxes=S.boxes.filter(x=>x.id!==b.id); S.prompts.forEach(p=>{ if(p.boxId===b.id) p.boxId=''; }); if(box===b.id) box='all'; save(); close(); render(); } };
+  if(c) v.querySelector('#del').onclick=()=>{ if(confirm('このコンテンツを消す？')){ S.contents=S.contents.filter(x=>x.id!==c.id); save(); close(); render(); } };
+  v.querySelector('#ok').onclick=()=>{
+    const title=v.querySelector('#fTitle').value.trim(), body=v.querySelector('#fBody').value;
+    let url=v.querySelector('#fUrl').value.trim(); if(url&&!/^https?:\/\//i.test(url)) url='https://'+url;
+    if(!title){ toast('タイトルを入れてね'); return; }
+    if(url&&!domainOf(url)){ toast('URLの形がおかしいみたい'); return; }
+    if(!url&&!body.trim()){ toast('URLか本文、どちらかは入れてね'); return; }
+    const o={id:c?.id||uid(),title,boxId:v.querySelector('#fBox').value,desc:v.querySelector('#fDesc').value.trim(),url,img:st.img,body,created:c?.created||Date.now()};
+    if(c) S.contents=S.contents.map(x=>x.id===c.id?o:x); else S.contents.unshift(o);
+    save(); close(); render(); toast(c?'直した！！':'追加した！！');
+  };
+  setTimeout(()=>v.querySelector('#fTitle').focus(),50);
+}
+function boxForm(b,kind='p'){
+  const C=kind==='c', list=C?S.cboxes:S.boxes, items=C?S.contents:S.prompts, word=C?'ジャンル':'箱', inner=C?'コンテンツ':'プロンプト';
+  const v=sheet(`<h2>${b?`${word}の名前を変える`:`${word}を作る`}</h2>
+    <div class="f"><label>${word}の名前</label><input type="text" id="fName" placeholder="${C?'例：無料配布 / 読み物 / セミナー資料':'例：Threads投稿 / 分析 / 記事'}" value="${esc(b?.name||'')}"></div>
+    <div class="row">${b?`<button class="btn danger" id="del">${word}を消す</button>`:''}<span class="spacer"></span><button class="btn" id="cancel">やめる</button><button class="btn primary" id="ok">保存</button></div>
+    ${b?`<div class="note" style="margin-top:14px">${word}を消しても、中の${inner}は消えない（「${word}なし」になる）</div>`:''}`);
+  v.querySelector('#cancel').onclick=close;
+  if(b) v.querySelector('#del').onclick=()=>{ if(confirm(`この${word}を消す？中の${inner}は残る`)){ const nl=list.filter(x=>x.id!==b.id); if(C) S.cboxes=nl; else S.boxes=nl; items.forEach(p=>{ if(p.boxId===b.id) p.boxId=''; }); if(C){ if(cbox===b.id) cbox='all'; } else if(box===b.id) box='all'; save(); close(); render(); } };
   v.querySelector('#ok').onclick=()=>{
     const name=v.querySelector('#fName').value.trim(); if(!name){ toast('名前を入れてね'); return; }
-    if(b) b.name=name; else { const nb={id:uid(),name}; S.boxes.push(nb); box=nb.id; }
+    if(b) b.name=name; else { const nb={id:uid(),name}; list.push(nb); if(C) cbox=nb.id; else box=nb.id; }
     save(); close(); render();
   };
   setTimeout(()=>v.querySelector('#fName').focus(),50);
@@ -424,9 +485,10 @@ function importJSON(file){
 }
 function validData(d){ return !!d && Array.isArray(d.tools) && Array.isArray(d.prompts); }
 function applyImport(d,add){
-  if(add){ const have=new Set([...S.tools,...S.prompts,...S.boxes].map(x=>x.id));
+  if(add){ const have=new Set([...S.tools,...S.prompts,...S.boxes,...S.contents,...S.cboxes].map(x=>x.id));
     (d.boxes||[]).forEach(b=>{ if(!have.has(b.id)) S.boxes.push(b); }); d.tools.forEach(t=>{ if(!have.has(t.id)) S.tools.push(t); }); d.prompts.forEach(p=>{ if(!have.has(p.id)) S.prompts.push(p); });
-  } else { S={v:1,seeded:true,tools:d.tools,boxes:d.boxes||[],prompts:d.prompts,banner:false,prefs:S.prefs}; }
+    (d.cboxes||[]).forEach(b=>{ if(!have.has(b.id)) S.cboxes.push(b); }); (d.contents||[]).forEach(c=>{ if(!have.has(c.id)) S.contents.push(c); });
+  } else { S={v:1,seeded:true,tools:d.tools,boxes:d.boxes||[],prompts:d.prompts,contents:d.contents||[],cboxes:d.cboxes||[],banner:false,prefs:S.prefs}; }
   save(); render(); toast('読み込んだ！！');
 }
 
@@ -439,10 +501,10 @@ async function pipeBytes(bytes,stream){ const r=new Blob([bytes]).stream().pipeT
 function shrinkForLink(dataUrl){ return new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
   const M=160,k=Math.min(1,M/Math.max(im.width,im.height)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(im.width*k)); c.height=Math.max(1,Math.round(im.height*k));
   c.getContext('2d').drawImage(im,0,0,c.width,c.height); res(c.toDataURL('image/jpeg',.7)); }catch(e){ res(''); } }; im.onerror=()=>res(''); im.src=dataUrl; }); }
-const hasOwnImg=()=>[...S.tools,...S.prompts].some(x=>(x.img||'').startsWith('data:'));
+const hasOwnImg=()=>[...S.tools,...S.prompts,...S.contents].some(x=>(x.img||'').startsWith('data:'));
 async function sharePayload(withImg){
   const conv=async x=>{ const img=x.img||''; if(!img.startsWith('data:')) return {...x}; return {...x,img:withImg?await shrinkForLink(img):''}; };
-  return {v:1,tools:await Promise.all(S.tools.map(conv)),boxes:S.boxes,prompts:await Promise.all(S.prompts.map(conv))};
+  return {v:1,tools:await Promise.all(S.tools.map(conv)),boxes:S.boxes,prompts:await Promise.all(S.prompts.map(conv)),cboxes:S.cboxes,contents:await Promise.all(S.contents.map(conv))};
 }
 async function encodeShare(withImg=true){
   const bytes=new TextEncoder().encode(JSON.stringify(await sharePayload(withImg)));
@@ -502,7 +564,7 @@ async function receiveHash(hash){
   let d=null;
   try{ d=await decodeShare(hash); }catch(e){ d=null; }
   if(!d){ toast('このリンクは読めなかった、、、'); return; }
-  const n=`ツール${d.tools.length}・箱${(d.boxes||[]).length}・プロンプト${d.prompts.length}`;
+  const n=`ツール${d.tools.length}・プロンプト${d.prompts.length}（箱${(d.boxes||[]).length}）・コンテンツ${(d.contents||[]).length}（ジャンル${(d.cboxes||[]).length}）`;
   const v=sheet(`<h2>引き継ぎデータを受け取る</h2>
     <div class="f"><div style="color:var(--sub);font-size:13px">${n} が入っている。今この端末にあるものに<b>足す</b>か、この端末のものを消して<b>置き換える</b>か選んでね。</div></div>
     <div class="row"><button class="btn" id="no">やめる</button><span class="spacer"></span><button class="btn danger" id="rp">置き換える</button><button class="btn primary" id="ad">足す</button></div>`);
@@ -514,7 +576,7 @@ async function receiveHash(hash){
 /* ---------- events ---------- */
 document.querySelectorAll('.tabs [role=tab]').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; render(); });
 $('#q').oninput=e=>{ q=e.target.value.trim(); render(); };
-$('#fab').onclick=()=>tab==='tools'?toolForm():promptForm();
+$('#fab').onclick=()=>tab==='tools'?toolForm():tab==='prompts'?promptForm():contentForm();
 $('#gear').onclick=settingsSheet;
 $('#sortBtn').onclick=()=>{ sorting=!sorting; render(); if(!sorting) toast('並び順を保存した！！'); };
 $('#bannerClose').onclick=()=>{ S.banner=false; save(); render(); };
@@ -524,18 +586,31 @@ $('#importBtn').onclick=()=>$('#importFile').click();
 $('#importFile').onchange=e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; };
 document.addEventListener('click',async e=>{
   const mb=e.target.closest('[data-mv-box]'); if(mb){ e.stopPropagation(); move(S.boxes,mb.dataset.mvBox,+mb.dataset.dir); return; }
+  const mc=e.target.closest('[data-mv-cbox]'); if(mc){ e.stopPropagation(); move(S.cboxes,mc.dataset.mvCbox,+mc.dataset.dir); return; }
   const b=e.target.closest('button'); if(!b) return;
   if(b.dataset.mvTool){ move(S.tools,b.dataset.mvTool,+b.dataset.dir); return; }
   if(b.dataset.mvPrompt){ move(S.prompts,b.dataset.mvPrompt,+b.dataset.dir); return; }
+  if(b.dataset.mvContent){ move(S.contents,b.dataset.mvContent,+b.dataset.dir); return; }
+  if(b.dataset.moreContent){ const c=S.contents.find(x=>x.id===b.dataset.moreContent); const items=[]; if(c.url){ items.push({label:'開く',fn:()=>window.open(c.url,'_blank','noopener')},{label:'URLをコピー',fn:async()=>{ await copyText(c.url); toast('コピーした！！'); }}); } items.push({label:'直す',fn:()=>contentForm(c)},{label:'削除',danger:true,fn:()=>{ if(confirm('このコンテンツを消す？')){ S.contents=S.contents.filter(x=>x.id!==c.id); save(); render(); } }}); menu(items); }
+  if(b.dataset.read){ const d=document.querySelector(`.ctext[data-cbody="${b.dataset.read}"]`); d.hidden=!d.hidden; b.textContent=d.hidden?'読む':'閉じる'; }
+  if(b.dataset.ccopy){ const c=S.contents.find(x=>x.id===b.dataset.ccopy); if(await copyText(c.body)) toast('コピーした！！'); else toast('コピーできなかった、、、'); }
+  if(b.dataset.cbox){ if(b.dataset.cbox==='__new') boxForm(null,'c'); else { cbox=b.dataset.cbox; render(); } }
   if(b.dataset.moreTool){ e.preventDefault(); const t=S.tools.find(x=>x.id===b.dataset.moreTool); menu([{label:'開く',fn:()=>window.open(t.url,'_blank','noopener')},{label:'URLをコピー',fn:async()=>{ await copyText(t.url); toast('コピーした！！'); }},{label:'直す',fn:()=>toolForm(t)},{label:'削除',danger:true,fn:()=>{ if(confirm('このツールを消す？')){ S.tools=S.tools.filter(x=>x.id!==t.id); save(); render(); } }}]); }
   if(b.dataset.morePrompt){ const p=S.prompts.find(x=>x.id===b.dataset.morePrompt); menu([{label:'直す',fn:()=>promptForm(p)},{label:'削除',danger:true,fn:()=>{ if(confirm('このプロンプトを消す？')){ S.prompts=S.prompts.filter(x=>x.id!==p.id); save(); render(); } }}]); }
   if(b.dataset.copy){ const p=S.prompts.find(x=>x.id===b.dataset.copy); const ok=await copyText(p.body); if(ok){ b.classList.add('done'); b.lastChild.textContent='コピーした'; toast('コピーした！！'); setTimeout(()=>{ b.classList.remove('done'); b.lastChild.textContent='コピー'; },1400); } else toast('コピーできなかった、、、'); }
   if(b.dataset.peek){ const pre=document.querySelector(`pre[data-body="${b.dataset.peek}"]`); pre.hidden=!pre.hidden; b.textContent=pre.hidden?'中身':'閉じる'; }
   if(b.dataset.box){ if(b.dataset.box==='__new') boxForm(); else { box=b.dataset.box; render(); } }
 });
-$('#chips').addEventListener('contextmenu',e=>{ const c=e.target.closest('.chip'); if(c&&c.dataset.box&&!['all','__new'].includes(c.dataset.box)){ e.preventDefault(); boxForm(S.boxes.find(b=>b.id===c.dataset.box)); } });
-let lp; $('#chips').addEventListener('touchstart',e=>{ const c=e.target.closest('.chip'); if(c&&c.dataset.box&&!['all','__new'].includes(c.dataset.box)) lp=setTimeout(()=>boxForm(S.boxes.find(b=>b.id===c.dataset.box)),550); },{passive:true});
-['touchend','touchmove','touchcancel'].forEach(ev=>$('#chips').addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
+// 箱・ジャンルのチップは右クリック／長押しで名前変更
+function bindChipEdit(sel,attr,list,kind){
+  const el=$(sel); let lp;
+  const pick=e=>{ const c=e.target.closest('.chip'); const id=c&&c.dataset[attr]; return id&&!['all','__new'].includes(id)?list().find(b=>b.id===id):null; };
+  el.addEventListener('contextmenu',e=>{ const b=pick(e); if(b){ e.preventDefault(); boxForm(b,kind); } });
+  el.addEventListener('touchstart',e=>{ const b=pick(e); if(b) lp=setTimeout(()=>boxForm(b,kind),550); },{passive:true});
+  ['touchend','touchmove','touchcancel'].forEach(ev=>el.addEventListener(ev,()=>clearTimeout(lp),{passive:true}));
+}
+bindChipEdit('#chips','box',()=>S.boxes,'p');
+bindChipEdit('#cchips','cbox',()=>S.cboxes,'c');
 render();
 receiveShare();
 </script>
