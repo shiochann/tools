@@ -514,6 +514,11 @@ async function encodeShare(withImg=true){
   if(window.CompressionStream){ try{ return 'h='+b64u(await pipeBytes(bytes,new CompressionStream('deflate-raw'))); }catch(e){} }
   return 'j='+b64u(bytes);
 }
+// 貼られた文章のどこにあっても、いちばん長い h=… / j=… を拾う（前後に文字が付いていても平気）
+function extractHash(text){
+  let best=null; for(const m of String(text||'').matchAll(/([hj])=([A-Za-z0-9\-_]{16,})/g)){ if(!best||m[2].length>best[2].length) best=m; }
+  return best?`#${best[1]}=${best[2]}`:'';
+}
 async function decodeShare(hash){
   const m=/^#?([hj])=([A-Za-z0-9\-_]+)$/.exec(hash||''); if(!m) return null;
   let bytes=unb64u(m[2]);
@@ -529,13 +534,15 @@ async function shareSheet(){
     <div class="f"><div style="color:var(--sub);font-size:13px">スマホのカメラでQRを読むか、リンクをコピーして自分に送る。開いた端末で「足す」か「置き換える」を選べば、今ここにあるツール・箱・プロンプトがそのまま出る。</div></div>
     ${own?`<label class="chk" style="display:flex;gap:8px;align-items:center;font-size:13px;margin:-4px 0 10px"><input type="checkbox" id="withImg" checked>自分で載せたサムネも入れる（リンクが長くなる）</label>`:''}
     <div class="qr" id="qr"><div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div></div>
-    <div class="f"><label>リンク <span id="sz" style="font-weight:500"></span></label><div class="linkbox" id="lk"></div></div>
-    <div class="row"><button class="btn" id="cancel">閉じる</button><span class="spacer"></span><button class="btn primary" id="cp">リンクをコピー</button></div>
+    <div class="f"><label>リンク <span id="sz" style="font-weight:500"></span></label><div class="linkbox" id="lk" style="user-select:none;-webkit-user-select:none"></div></div>
+    <div class="row"><button class="btn" id="cancel">閉じる</button><span class="spacer"></span><button class="btn" id="fileBtn">ファイルで送る</button><button class="btn primary" id="cp">リンクをコピー</button></div>
     <div class="note" id="shareNote" style="margin-top:14px">リンクの中にデータが入っている（サーバーには送られない）。</div>
-    <div class="f" style="margin-top:18px"><label>受け取る側はこっち：届いたリンクを貼る</label><input type="text" id="rcv" placeholder="https://shiochann.github.io/tools/#h=…" inputmode="url" autocomplete="off"></div>
+    <div class="note" style="margin-top:10px"><b>リンクが長くて届かないときは「ファイルで送る」。</b>中身を丸ごとファイルにして、LINE・AirDrop・メールで送れる（サムネもそのまま入る）。受け取った端末では、ファイルを保存してから、画面いちばん下の「読み込む」で選ぶ。</div>
+    <div class="f" style="margin-top:18px"><label>受け取る側はこっち：届いたリンクを貼る</label><textarea id="rcv" placeholder="https://shiochann.github.io/tools/#h=…（メッセージごと貼っても大丈夫）" style="min-height:72px;font-size:13px"></textarea></div>
     <div class="row"><span class="spacer"></span><button class="btn" id="rcvBtn">貼ったリンクを読み込む</button></div>`);
   v.querySelector('#cancel').onclick=close;
-  v.querySelector('#rcvBtn').onclick=()=>{ const t=v.querySelector('#rcv').value.trim(); const i=t.indexOf('#'); if(i<0){ toast('引き継ぎリンクを貼ってね'); return; } receiveHash(t.slice(i)); };
+  v.querySelector('#rcvBtn').onclick=()=>{ const t=v.querySelector('#rcv').value.trim(); const h=extractHash(t); if(!h){ toast(t?'引き継ぎリンクが見つからなかった、、、':'引き継ぎリンクを貼ってね'); return; } receiveHash(h); };
+  v.querySelector('#fileBtn').onclick=shareFile;
   const lk=v.querySelector('#lk'), qr=v.querySelector('#qr'), sz=v.querySelector('#sz'), note=v.querySelector('#shareNote');
   let url='', seq=0;
   v.querySelector('#cp').onclick=async()=>{ if(!url) return; if(await copyText(url)) toast('コピーした！！'); else toast('コピーできなかった、、、'); };
@@ -544,7 +551,7 @@ async function shareSheet(){
     qr.innerHTML='<div style="color:var(--sub);font-size:13px;padding:20px">作ってる、、、</div>'; lk.textContent=''; sz.textContent='';
     try{ url=location.origin+location.pathname+'#'+await encodeShare(withImg); }catch(e){ if(my===seq){ lk.textContent='リンクを作れなかった、、、'; qr.innerHTML=''; } return; }
     if(my!==seq) return;
-    lk.textContent=url;
+    lk.textContent=url.slice(0,72)+'…（全部で'+url.length.toLocaleString()+'文字。「リンクをコピー」で丸ごとコピーされる）';
     const bytes=new TextEncoder().encode(url).length, kb=(bytes/1024).toFixed(bytes<10240?1:0);
     sz.textContent=`（${kb}KB）`;
     const tips=[];
@@ -560,13 +567,38 @@ async function shareSheet(){
 }
 async function receiveShare(){
   if(!/^#[hj]=/.test(location.hash)) return;
-  const h=location.hash; history.replaceState(null,'',location.pathname+location.search);
+  const h=extractHash(location.hash)||location.hash; history.replaceState(null,'',location.pathname+location.search);
   receiveHash(h);
 }
+function receiveFailed(hash,err){
+  const n=(hash||'').length, old=err==='old';
+  let why='途中で切れているみたい。';
+  if(old) why='このブラウザが古くて開けない（iPhoneはiOS 16.4以上、Androidは最近のChromeが必要）。';
+  else if(n>=9000) why=`途中で切れているみたい（貼られたのは${n.toLocaleString()}文字）。<b>LINEのトークは1万字あたりで切れる</b>ので、長いリンクはそこで欠けることが多い。`;
+  else if(n<200) why='リンクの一部しか貼られていないみたい。';
+  const v=sheet(`<h2>このリンクは読めなかった</h2>
+    <div class="f"><div style="color:var(--sub);font-size:13px;line-height:1.7">${why}</div></div>
+    <div class="note"><b>直し方</b><br>
+    ・送る側で「リンクをコピー」ボタンを使って丸ごとコピーする（文字を選んでコピーすると途中までになりやすい）<br>
+    ・「自分で載せたサムネも入れる」のチェックを外して、短いリンクにする<br>
+    ・いちばん確実：送る側で<b>「ファイルで送る」</b>→ LINEやAirDropでファイルを送る → この端末で保存して、画面いちばん下の<b>「読み込む」</b>で選ぶ</div>
+    <div class="row" style="margin-top:14px"><span class="spacer"></span><button class="btn primary" id="okF">わかった</button></div>`);
+  v.querySelector('#okF').onclick=close;
+}
+// 中身を丸ごとファイルにして共有（対応端末では共有シート、それ以外はダウンロード）
+async function shareFile(){
+  const d=new Date(), z=n=>String(n).padStart(2,'0'); const name=`tools-${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}.json`;
+  const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+  try{ const f=new File([blob],name,{type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:'tools 引き継ぎ'}); return; }
+  }catch(e){ if(e&&e.name==='AbortError') return; }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  toast('ファイルを保存した。相手に送って「読み込む」で開いてね');
+}
 async function receiveHash(hash){
-  let d=null;
-  try{ d=await decodeShare(hash); }catch(e){ d=null; }
-  if(!d){ toast('このリンクは読めなかった、、、'); return; }
+  let d=null, err='';
+  try{ d=await decodeShare(hash); }catch(e){ d=null; err=String(e&&e.message||e); }
+  if(!d){ receiveFailed(hash,err); return; }
   const n=`ツール${d.tools.length}・プロンプト${d.prompts.length}（箱${(d.boxes||[]).length}）・コンテンツ${(d.contents||[]).length}（ジャンル${(d.cboxes||[]).length}）`;
   const v=sheet(`<h2>引き継ぎデータを受け取る</h2>
     <div class="f"><div style="color:var(--sub);font-size:13px">${n} が入っている。今この端末にあるものに<b>足す</b>か、この端末のものを消して<b>置き換える</b>か選んでね。</div></div>
